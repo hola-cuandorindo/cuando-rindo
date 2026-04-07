@@ -1,0 +1,17 @@
+# --- SEGURIDAD ---
+.env
+
+# --- CACHÉ Y DATOS ---
+cache_gemini.json
+*.pdf
+*.xlsx
+*.csv
+
+# --- BASURA DE PYTHON ---
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# --- ENTORNOS VIRTUALES ---
+venv/
+env/

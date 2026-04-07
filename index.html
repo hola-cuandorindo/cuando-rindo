@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cuando Rindo | Cuatri organizado</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0f0f11;
+    --surface: #18181c;
+    --surface2: #212127;
+    --border: #2e2e36;
+    --accent: #f5c518;
+    --green: #22c55e;
+    --text: #f0f0f5;
+    --muted: #8888a0;
+    --radius: 16px;
+  }
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif;
+    font-weight: 400; min-height: 100vh; overflow-x: hidden;
+  }
+
+  body::before {
+    content: ''; position: fixed; inset: 0;
+    background: radial-gradient(ellipse 80% 50% at 50% -10%, rgba(245,197,24,0.06) 0%, transparent 60%);
+    pointer-events: none; z-index: 0;
+  }
+
+  .wrapper { position: relative; z-index: 1; max-width: 860px; margin: 0 auto; padding: 0 24px 80px; }
+
+  nav { display: flex; justify-content: center; align-items: center; padding: 32px 0 16px; }
+  .logo { font-size: 22px; font-weight: 800; letter-spacing: -0.5px; }
+  .logo span { color: var(--accent); }
+
+  .hero { text-align: center; padding: 40px 0 40px; }
+  h1 { font-size: clamp(2.2rem, 6vw, 3.2rem); font-weight: 800; line-height: 1.1; letter-spacing: -1.5px; margin-bottom: 20px; }
+  h1 em { font-style: normal; color: var(--accent); }
+  .hero-sub { font-size: 17px; color: var(--muted); max-width: 550px; margin: 0 auto; line-height: 1.65; }
+
+  /* ── SHOWCASE PREVIEW (ESTILO PDF) ── */
+  .showcase-preview { margin: 0 auto 56px; max-width: 850px; width: 100%; animation: fadeUp 0.6s ease forwards; }
+  .showcase-label { text-align: center; font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); margin-bottom: 16px; }
+  .fake-calendar { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); padding: 24px; box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+  
+  .fc-header { display: flex; align-items: baseline; gap: 8px; margin-bottom: 16px; }
+  .fc-month { font-weight: 800; font-size: 22px; color: var(--text); }
+  .fc-year { font-weight: 500; font-size: 18px; color: var(--muted); }
+  
+  .fc-legend { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; padding-bottom: 16px; border-bottom: 1px solid var(--border); }
+  .legend-item { display: flex; align-items: center; font-size: 12px; color: var(--muted); font-weight: 600; }
+  .legend-dot { width: 12px; height: 12px; border-radius: 2px; margin-right: 6px; }
+  .legend-dot.parcial { background: rgb(234, 243, 222); border: 1px solid rgb(59, 109, 17); }
+  .legend-dot.recup { background: rgb(250, 238, 218); border: 1px solid rgb(133, 79, 11); }
+  .legend-dot.final { background: rgb(252, 235, 235); border: 1px solid rgb(163, 45, 45); }
+  .legend-dot.oblig { background: rgb(230, 241, 251); border: 1px solid rgb(24, 95, 165); }
+
+  .fc-grid { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+  .fc-day-name { text-align: center; font-size: 11px; color: var(--muted); padding: 10px 0; font-weight: 600; background: var(--surface); }
+  .fc-day { min-height: 85px; background: var(--bg); padding: 6px; display: flex; flex-direction: column; gap: 3px; }
+  .fc-day.empty { background: var(--surface2); opacity: 0.4; }
+  .fc-date { font-size: 13px; font-weight: 700; color: var(--muted); margin-bottom: 4px; }
+  .fc-day.has-event .fc-date { color: var(--text); }
+  
+  .fc-event { font-size: 10px; font-weight: 600; padding: 4px 6px; border-radius: 3px; line-height: 1.2; display: -webkit-box; -webkit-line-clamp: 2; line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; word-break: break-word; }
+  .fc-event.parcial { background: rgb(234, 243, 222); color: rgb(59, 109, 17); }
+  .fc-event.recup { background: rgb(250, 238, 218); color: rgb(133, 79, 11); }
+  .fc-event.final { background: rgb(252, 235, 235); color: rgb(163, 45, 45); }
+  .fc-event.oblig { background: rgb(230, 241, 251); color: rgb(24, 95, 165); }
+
+  @media (max-width: 500px) {
+    .fc-event { display: none; }
+    .fc-day { min-height: 50px; position: relative; }
+    .fc-day.has-event::after { content: ''; position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+    .fc-legend { display: none; }
+  }
+
+  /* ── UPLOAD ZONE ── */
+  .upload-section { margin: 0 0 48px; }
+  .upload-zone {
+    background: var(--surface); border: 2px dashed var(--border); border-radius: var(--radius);
+    padding: 52px 32px; text-align: center; cursor: pointer; transition: background 0.2s, border-color 0.2s, transform 0.15s;
+    position: relative;
+  }
+  .upload-zone:hover { background: var(--surface2); border-color: var(--accent); transform: translateY(-2px); }
+  .upload-zone.drag-over { background: rgba(245,197,24,0.06); border-color: var(--accent); }
+  .upload-icon { font-size: 48px; display: block; margin-bottom: 16px; }
+  .upload-main { font-size: 20px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  .upload-sub { font-size: 14px; color: var(--muted); margin-bottom: 28px; line-height: 1.5; }
+  .btn-upload {
+    display: inline-block; background: var(--accent); color: #0f0f11; font-weight: 700;
+    font-size: 15px; padding: 14px 32px; border-radius: 12px; cursor: pointer; transition: transform 0.1s;
+  }
+  .btn-upload:hover { transform: scale(1.03); }
+  #file-input { display: none; }
+  .upload-formats { margin-top: 16px; font-size: 12px; color: var(--muted); }
+
+  .files-list { display: none; flex-direction: column; gap: 8px; margin-top: 16px; }
+  .file-item {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: 10px;
+    padding: 12px 16px; display: flex; align-items: center; gap: 12px; font-size: 14px;
+  }
+  .file-name { flex: 1; color: var(--text); font-weight: 500; }
+  .file-remove { background: none; border: none; color: var(--muted); cursor: pointer; font-size: 18px; }
+  .file-remove:hover { color: #ff5555; }
+
+  .cta-container { display: none; flex-direction: column; align-items: center; gap: 12px; margin-top: 24px; }
+  .btn-generate {
+    width: 100%; background: var(--accent); color: #0f0f11; font-weight: 800; font-size: 18px;
+    padding: 18px 32px; border-radius: 14px; border: none; cursor: pointer; transition: transform 0.1s;
+    display: flex; align-items: center; justify-content: center; gap: 10px; box-shadow: 0 0 32px rgba(245,197,24,0.2);
+  }
+  .btn-generate:hover { transform: translateY(-2px); }
+
+  /* ── HOW IT WORKS ── */
+  .how {
+    display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; align-items: start; gap: 8px;
+    margin: 48px 0; padding: 32px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+  }
+  .step { text-align: center; }
+  .step-icon { font-size: 28px; display: block; margin-bottom: 12px; }
+  .step-title { font-weight: 700; font-size: 14px; margin-bottom: 4px; }
+  .step-desc { font-size: 12px; color: var(--muted); line-height: 1.5; }
+  .step-arrow { font-size: 18px; color: var(--border); padding-top: 28px; }
+
+  /* ── SECCIÓN DE EDICIÓN ── */
+  .edit-section {
+    background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 24px; margin-bottom: 24px;
+  }
+  .edit-section h3 { font-size: 16px; font-weight: 700; margin-bottom: 6px; color: var(--accent); }
+  .edit-section p { font-size: 13px; color: var(--muted); margin-bottom: 16px; }
+  
+  .materia-edit-group { margin-bottom: 8px; }
+  .materia-edit-group label { display: none; } /* Ocultamos el texto redundante */
+  .edit-input {
+    width: 100%; padding: 14px 16px; border-radius: 8px; border: 1px solid var(--border);
+    background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; font-weight: 500;
+    transition: all 0.2s ease;
+  }
+  .edit-input:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 2px rgba(245,197,24,0.15); }
+
+  /* ── RESULTADO REAL ── */
+  .result-section { display: none; margin-top: 20px; animation: fadeUp 0.5s ease forwards; }
+  .result-header { text-align: center; margin-bottom: 30px; }
+  .result-header h2 { font-size: 24px; font-weight: 800; color: var(--accent); margin-bottom: 8px; }
+  .result-header p { color: var(--muted); font-size: 15px; }
+  
+  .dates-list {
+    background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 24px; margin-bottom: 24px; max-height: 350px; overflow-y: auto;
+  }
+  
+  /* Scrollbar oscuro elegante con margen "invisible" */
+  .dates-list::-webkit-scrollbar { width: 14px; }
+  .dates-list::-webkit-scrollbar-track { background: transparent; margin: 12px 0; }
+  .dates-list::-webkit-scrollbar-thumb { 
+    background: var(--border); 
+    border-radius: 10px; 
+    border: 4px solid var(--surface); /* El truco para separarla del borde */
+  }
+  .dates-list::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+
+  .date-item { display: flex; align-items: center; padding: 14px 0; border-bottom: 1px solid var(--surface2); }
+  .date-item:last-child { border-bottom: none; }
+  
+  .buttons-grid {
+    display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px;
+    width: 100%; /* Hacemos que ocupe exactamente el ancho de la caja de arriba */
+    margin: 0 auto 16px;
+  }
+  
+  .download-btn {
+    width: 100%; 
+    font-family: 'Inter', sans-serif; /* Forzamos tipografía de alta calidad */
+    font-weight: 600; /* Letra más fina para que no se empaste */
+    font-size: 15px; 
+    padding: 18px 20px; /* Botones más altos y premium */
+    border-radius: 12px;
+    border: none; 
+    cursor: pointer; 
+    transition: all 0.2s ease; 
+    display: flex; align-items: center; justify-content: center; gap: 10px;
+  }
+  
+  .download-btn.primary { background: var(--accent); color: #000; }
+  .download-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(245,197,24,0.25); }
+  
+  .download-btn.secondary { background: transparent; color: var(--text); border: 1px solid var(--border); }
+  .download-btn.secondary:hover { background: var(--surface2); border-color: var(--muted); transform: translateY(-2px); }
+
+  .trust {
+    display: flex; align-items: center; justify-content: center; gap: 24px;
+    padding: 24px 0; border-top: 1px solid var(--border); margin: 48px 0; flex-wrap: wrap;
+  }
+  .trust-item { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
+
+  .loading-overlay {
+    display: none; position: fixed; inset: 0; background: rgba(15,15,17,0.92);
+    z-index: 100; flex-direction: column; align-items: center; justify-content: center; gap: 20px;
+  }
+  .loading-overlay.show { display: flex; }
+  .spinner {
+    width: 48px; height: 48px; border: 3px solid var(--border); border-top-color: var(--accent);
+    border-radius: 50%; animation: spin 0.8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-text { font-size: 18px; font-weight: 700; }
+
+  @media (max-width: 600px) {
+    .how { grid-template-columns: 1fr; }
+    .step-arrow { display: none; }
+    .buttons-grid { grid-template-columns: 1fr; }
+  }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+</style>
+</head>
+<body>
+
+<div class="wrapper">
+  <nav><div class="logo">Cuando<span>Rindo</span></div></nav>
+
+  <section class="hero" id="hero-section">
+    <h1>Tu cuatrimestre<br><em>organizado en segundos</em></h1>
+    <p class="hero-sub" style="margin-bottom: 24px;">
+      Subí los cronogramas de tus materias y dejá que la IA arme tu calendario.<br>
+      <span style="color: var(--accent); font-weight: 700; font-size: 19px; display: inline-block; margin-top: 8px;">Nunca más anotes fechas a mano.</span>
+    </p>
+  </section>
+
+  <section class="showcase-preview" id="showcase-section">
+    <div class="showcase-label">Ejemplo de calendario generado</div>
+    <div class="fake-calendar">
+      <div class="fc-header">
+        <div class="fc-month">Mayo</div>
+        <div class="fc-year">2026</div>
+      </div>
+      
+      <div class="fc-legend">
+        <div class="legend-item"><span class="legend-dot parcial"></span>Parcial</div>
+        <div class="legend-item"><span class="legend-dot recup"></span>Recuperatorio</div>
+        <div class="legend-item"><span class="legend-dot final"></span>Final</div>
+        <div class="legend-item"><span class="legend-dot oblig"></span>Actividad / TP</div>
+      </div>
+
+      <div class="fc-grid">
+        <div class="fc-day-name">Lun</div><div class="fc-day-name">Mar</div><div class="fc-day-name">Mié</div>
+        <div class="fc-day-name">Jue</div><div class="fc-day-name">Vie</div><div class="fc-day-name">Sáb</div><div class="fc-day-name">Dom</div>
+        
+        <div class="fc-day empty"></div><div class="fc-day empty"></div><div class="fc-day empty"></div><div class="fc-day empty"></div>
+        
+        <div class="fc-day"><span class="fc-date">1</span></div>
+        <div class="fc-day"><span class="fc-date">2</span></div>
+        <div class="fc-day"><span class="fc-date">3</span></div>
+        
+        <div class="fc-day"><span class="fc-date">4</span></div>
+        <div class="fc-day has-event"><span class="fc-date">5</span><div class="fc-event oblig">Matemática - TP</div></div>
+        <div class="fc-day"><span class="fc-date">6</span></div>
+        <div class="fc-day"><span class="fc-date">7</span></div>
+        <div class="fc-day has-event"><span class="fc-date">8</span><div class="fc-event parcial">Programación - 1er P.</div></div>
+        <div class="fc-day"><span class="fc-date">9</span></div>
+        <div class="fc-day"><span class="fc-date">10</span></div>
+
+        <div class="fc-day has-event"><span class="fc-date">11</span><div class="fc-event parcial">Derecho - 1er P.</div></div>
+        <div class="fc-day"><span class="fc-date">12</span></div>
+        <div class="fc-day"><span class="fc-date">13</span></div>
+        <div class="fc-day has-event"><span class="fc-date">14</span><div class="fc-event oblig">Economía - Entrega</div></div>
+        <div class="fc-day"><span class="fc-date">15</span></div>
+        <div class="fc-day"><span class="fc-date">16</span></div>
+        <div class="fc-day"><span class="fc-date">17</span></div>
+
+        <div class="fc-day"><span class="fc-date">18</span></div>
+        <div class="fc-day"><span class="fc-date">19</span></div>
+        <div class="fc-day has-event"><span class="fc-date">20</span><div class="fc-event final">Historia - Final</div></div>
+        <div class="fc-day"><span class="fc-date">21</span></div>
+        <div class="fc-day has-event"><span class="fc-date">22</span><div class="fc-event oblig">Programación - TP</div></div>
+        <div class="fc-day"><span class="fc-date">23</span></div>
+        <div class="fc-day"><span class="fc-date">24</span></div>
+
+        <div class="fc-day"><span class="fc-date">25</span></div>
+        <div class="fc-day has-event"><span class="fc-date">26</span><div class="fc-event parcial">Matemática - 2do P.</div></div>
+        <div class="fc-day"><span class="fc-date">27</span></div>
+        <div class="fc-day has-event"><span class="fc-date">28</span><div class="fc-event parcial">Economía - 1er P.</div></div>
+        <div class="fc-day"><span class="fc-date">29</span></div>
+        <div class="fc-day"><span class="fc-date">30</span></div>
+        <div class="fc-day"><span class="fc-date">31</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="upload-section" id="upload-section">
+    <div class="upload-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+      <span class="upload-icon">📄</span>
+      <div class="upload-main">Arrastrá tus cronogramas acá</div>
+      <div class="upload-sub">Podés subir varios archivos al mismo tiempo.</div>
+      <label class="btn-upload" onclick="event.stopPropagation(); document.getElementById('file-input').click()">Elegir archivos</label>
+      <div class="upload-formats">Formatos aceptados: PDF · Excel · CSV &nbsp;|&nbsp; Hasta 200MB</div>
+    </div>
+    <input type="file" id="file-input" multiple accept=".pdf,.xlsx,.csv">
+
+    <div class="files-list" id="files-list"></div>
+
+    <div class="cta-container" id="cta-container">
+      <button class="btn-generate" id="btn-generate">⚡ Generar mi calendario</button>
+      <span class="cta-note" style="font-size: 13px; color: var(--muted);">✅ Compatible con cronogramas de cualquier universidad</span>
+    </div>
+
+    <div class="how">
+      <div class="step">
+        <span class="step-icon">📂</span>
+        <div class="step-title">1. Subí tus archivos</div>
+        <div class="step-desc">Arrastrá los programas de tus materias.</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <span class="step-icon">🤖</span>
+        <div class="step-title">2. La IA lee por vos</div>
+        <div class="step-desc">Nuestro motor encuentra al instante todos tus parciales, finales y TPs.</div>
+      </div>
+      <div class="step-arrow">→</div>
+      <div class="step">
+        <span class="step-icon">📅</span>
+        <div class="step-title">3. Calendario listo</div>
+        <div class="step-desc">Descargá tu calendario en PDF o exportalo directo a Google Calendar.</div>
+      </div>
+    </div>
+  </section>
+
+  <section class="result-section" id="result-section">
+    <div class="result-header">
+      <h2>🎉 ¡Calendario Listo!</h2>
+      <p>Ya tenés todo el cuatri organizado. Descargá tu calendario como prefieras.</p>
+    </div>
+    
+    <div class="edit-section" id="edit-section">
+      <h3>✍️ Nombres de las materias</h3>
+      <p>Personalizá el nombre de las materias (ej: en vez de "Introducción a la Economía" ⟶ "Economía I").</p>
+      <div id="materias-inputs-container"></div>
+    </div>
+
+    <div class="dates-list" id="dates-list"></div>
+
+    <div class="buttons-grid">
+      <button class="download-btn secondary" onclick="descargarICS()">
+        📅 Exportar a Google o Apple Calendar
+      </button>
+      <button class="download-btn primary" onclick="descargarPDF()" id="btn-pdf">
+        ⬇️ Descargar calendario (Pdf)
+      </button>
+    </div>
+    <p style="text-align: center; color: var(--muted); font-size: 13px;">
+      Elegí el formato que prefieras para organizar tu cuatrimestre.
+    </p>
+  </section>
+
+  <div class="trust">
+    <div class="trust-item">💸 100% Gratis</div>
+    <div class="trust-item">⚡ Analizado con IA</div>
+    <div class="trust-item">🎓 Creado por y para estudiantes</div>
+  </div>
+</div>
+
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loading-text">Analizando tus archivos...</div>
+  <div class="loading-sub" style="color: var(--muted); margin-top: 8px; font-size: 14px;">Estamos buscando fechas de parciales y finales</div>
+</div>
+
+<script>
+const dropZone = document.getElementById('drop-zone');
+const fileInput = document.getElementById('file-input');
+const filesList = document.getElementById('files-list');
+const ctaContainer = document.getElementById('cta-container');
+let uploadedFiles = [];
+let eventosExtraidos = [];
+
+function renderFiles() {
+  if (uploadedFiles.length === 0) {
+    filesList.style.display = 'none';
+    ctaContainer.style.display = 'none';
+    return;
+  }
+  filesList.style.display = 'flex';
+  ctaContainer.style.display = 'flex';
+  filesList.innerHTML = uploadedFiles.map((f, i) => `
+    <div class="file-item">
+      <span class="file-name">📄 ${f.name}</span>
+      <button class="file-remove" onclick="removeFile(${i})">×</button>
+    </div>
+  `).join('');
+}
+
+function removeFile(index) { uploadedFiles.splice(index, 1); renderFiles(); }
+function addFiles(files) {
+  for (const f of files) { if (!uploadedFiles.find(u => u.name === f.name)) uploadedFiles.push(f); }
+  renderFiles();
+}
+
+fileInput.addEventListener('change', e => addFiles(e.target.files));
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); addFiles(e.dataTransfer.files); });
+
+function renderFechasVisuales() {
+  const datesContainer = document.getElementById('dates-list');
+  datesContainer.innerHTML = '';
+  
+  if(eventosExtraidos.length === 0) {
+     datesContainer.innerHTML = '<p style="text-align:center; color: var(--muted);">No se encontraron fechas.</p>';
+  } else {
+    eventosExtraidos.forEach(item => {
+      // Magia: Detectar qué clase de pastilla de color ponerle
+      let tipoClase = 'parcial';
+      let tipoMin = item.tipo.toLowerCase();
+      if (tipoMin.includes('recuperatorio')) tipoClase = 'recup';
+      else if (tipoMin.includes('final')) tipoClase = 'final';
+      else if (tipoMin.includes('actividad') || tipoMin.includes('tp') || tipoMin.includes('entrega') || tipoMin.includes('obligatoria')) tipoClase = 'oblig';
+
+      // Reemplazamos el chinche por una lista super limpia con la pastilla a la derecha
+      datesContainer.innerHTML += `
+        <div class="date-item">
+          <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
+            <span style="font-size: 15px; font-weight: 600;">
+              <span style="color: var(--accent); display: inline-block; width: 50px;">${item.fecha}</span> 
+              <span style="color: var(--border); margin: 0 8px;">|</span> 
+              ${item.materia}
+            </span>
+            <span class="fc-event ${tipoClase}" style="font-size: 11px; padding: 6px 12px; border-radius: 6px;">${item.tipo}</span>
+          </div>
+        </div>`;
+    });
+  }
+}
+
+document.getElementById('btn-generate').addEventListener('click', async () => {
+  if (uploadedFiles.length === 0) return;
+  const overlay = document.getElementById('loading');
+  document.getElementById('loading-text').innerText = "Analizando tus archivos...";
+  overlay.classList.add('show');
+
+  const formData = new FormData();
+  uploadedFiles.forEach(file => formData.append("archivos", file));
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/generar-calendario", { method: "POST", body: formData });
+    const data = await response.json();
+
+    if (data.estado === "exito") {
+      eventosExtraidos = data.resultados.map(ev => ({ ...ev, materiaOriginal: ev.materia }));
+      
+      const materiasUnicas = [...new Set(eventosExtraidos.map(ev => ev.materiaOriginal))];
+      const inputsContainer = document.getElementById('materias-inputs-container');
+      inputsContainer.innerHTML = '';
+      
+      materiasUnicas.forEach(mat => {
+        inputsContainer.innerHTML += `
+          <div class="materia-edit-group">
+            <label>Materia detectada:</label>
+            <input type="text" class="edit-input" data-original="${mat}" value="${mat}">
+          </div>
+        `;
+      });
+
+      document.querySelectorAll('.edit-input').forEach(input => {
+        input.addEventListener('input', (e) => {
+          const original = e.target.getAttribute('data-original');
+          const nuevoNombre = e.target.value;
+          eventosExtraidos.forEach(ev => { if (ev.materiaOriginal === original) ev.materia = nuevoNombre; });
+          renderFechasVisuales();
+        });
+      });
+
+      renderFechasVisuales();
+
+      document.getElementById('upload-section').style.display = 'none';
+      document.getElementById('hero-section').style.display = 'none';
+      document.getElementById('showcase-section').style.display = 'none';
+      document.getElementById('result-section').style.display = 'block';
+      overlay.classList.remove('show');
+      window.scrollTo(0, 0);
+    } else { alert("Error en el servidor."); overlay.classList.remove('show'); }
+  } catch (error) { console.error(error); alert("Error de conexión."); overlay.classList.remove('show'); }
+});
+
+function descargarICS() {
+  if (eventosExtraidos.length === 0) return alert("No hay fechas.");
+  let icsContent = "BEGIN:VCALENDAR\nVERSION:2.0\nPRODID:-//Cuando Rindo IA//\n";
+  const añoActual = new Date().getFullYear(); 
+
+  eventosExtraidos.forEach(ev => {
+    let partes = ev.fecha.split('/');
+    let dia = partes[0].padStart(2, '0');
+    let mes = partes[1].padStart(2, '0');
+    let fechaFormato = `${añoActual}${mes}${dia}`;
+    icsContent += "BEGIN:VEVENT\n";
+    icsContent += `SUMMARY:${ev.materia}: ${ev.tipo}\n`;
+    icsContent += `DTSTART;VALUE=DATE:${fechaFormato}\n`;
+    icsContent += "END:VEVENT\n";
+  });
+  icsContent += "END:VCALENDAR";
+
+  const blob = new Blob([icsContent], { type: 'text/calendar' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = "Cuando_Rindo.ics";
+  a.click();
+}
+
+async function descargarPDF() {
+  if (eventosExtraidos.length === 0) return alert("No hay fechas.");
+  const btn = document.getElementById('btn-pdf');
+  const textOriginal = btn.innerHTML;
+  btn.innerHTML = "⏳ Generando...";
+  btn.disabled = true;
+
+  try {
+    const response = await fetch("http://127.0.0.1:8000/generar-pdf", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ eventos: eventosExtraidos })
+    });
+
+    if (!response.ok) throw new Error("Error al generar PDF");
+
+    const blob = await response.blob();
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = "Cuando_Rindo_Grilla.pdf";
+    a.click();
+  } catch (error) {
+    console.error(error);
+    alert("Hubo un problema armando el PDF.");
+  } finally {
+    btn.innerHTML = textOriginal;
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>

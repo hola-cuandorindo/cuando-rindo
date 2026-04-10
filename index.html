@@ -358,6 +358,18 @@
     </p>
   </section>
 
+  <section class="error-section" id="error-section" style="display: none; text-align: center; margin-top: 40px; animation: fadeUp 0.5s ease forwards;">
+    <div style="font-size: 56px; margin-bottom: 16px;">🐌</div>
+    <h2 style="font-size: 24px; font-weight: 800; color: #ff5555; margin-bottom: 8px;">Google está saturado</h2>
+    <p style="color: var(--muted); max-width: 450px; margin: 0 auto 24px; line-height: 1.6;">
+      Hay muchísima gente consultando fechas ahora mismo y la IA está tardando más de lo normal en responder.<br><br>
+      <strong>¡No te preocupes! Tus archivos siguen cargados.</strong> Esperá unos minutitos y volvé a intentar.
+    </p>
+    <button class="btn-generate" id="btn-reintentar" style="max-width: 300px; margin: 0 auto; background: var(--surface2); color: var(--text); border: 1px solid var(--border);">
+      🔄 Reintentar ahora
+    </button>
+  </section>
+
   <div class="trust">
     <div class="trust-item">💸 100% Gratis</div>
     <div class="trust-item">⚡ Analizado con IA</div>
@@ -414,14 +426,12 @@ function renderFechasVisuales() {
      datesContainer.innerHTML = '<p style="text-align:center; color: var(--muted);">No se encontraron fechas.</p>';
   } else {
     eventosExtraidos.forEach(item => {
-      // Magia: Detectar qué clase de pastilla de color ponerle
       let tipoClase = 'parcial';
       let tipoMin = item.tipo.toLowerCase();
       if (tipoMin.includes('recuperatorio')) tipoClase = 'recup';
       else if (tipoMin.includes('final')) tipoClase = 'final';
       else if (tipoMin.includes('actividad') || tipoMin.includes('tp') || tipoMin.includes('entrega') || tipoMin.includes('obligatoria')) tipoClase = 'oblig';
 
-      // Reemplazamos el chinche por una lista super limpia con la pastilla a la derecha
       datesContainer.innerHTML += `
         <div class="date-item">
           <div style="display: flex; align-items: center; justify-content: space-between; width: 100%;">
@@ -437,20 +447,32 @@ function renderFechasVisuales() {
   }
 }
 
-document.getElementById('btn-generate').addEventListener('click', async () => {
+// NUEVA FUNCIÓN PARA GENERAR CALENDARIO Y MANEJAR ERRORES
+const generarCalendario = async () => {
   if (uploadedFiles.length === 0) return;
   const overlay = document.getElementById('loading');
   document.getElementById('loading-text').innerText = "Analizando tus archivos...";
   overlay.classList.add('show');
+
+  // Ocultamos el error por si es un reintento
+  document.getElementById('error-section').style.display = 'none';
 
   const formData = new FormData();
   uploadedFiles.forEach(file => formData.append("archivos", file));
 
   try {
     const response = await fetch("/generar-calendario", { method: "POST", body: formData });
+    
+    // DETECTAMOS EL ERROR 503 ANTES DE LEER EL JSON
+    if (response.status === 503) {
+      mostrarErrorDemanda();
+      overlay.classList.remove('show');
+      return; 
+    }
+
     const data = await response.json();
 
-    if (data.estado === "exito") {
+    if (response.ok && data.estado === "exito") {
       eventosExtraidos = data.resultados.map(ev => ({ ...ev, materiaOriginal: ev.materia }));
       
       const materiasUnicas = [...new Set(eventosExtraidos.map(ev => ev.materiaOriginal))];
@@ -483,9 +505,30 @@ document.getElementById('btn-generate').addEventListener('click', async () => {
       document.getElementById('result-section').style.display = 'block';
       overlay.classList.remove('show');
       window.scrollTo(0, 0);
-    } else { alert("Error en el servidor."); overlay.classList.remove('show'); }
-  } catch (error) { console.error(error); alert("Error de conexión."); overlay.classList.remove('show'); }
-});
+    } else { 
+      alert("No pudimos leer las fechas. Probá con otro archivo."); 
+      overlay.classList.remove('show'); 
+    }
+  } catch (error) { 
+    console.error(error); 
+    alert("Error de conexión. Revisá tu internet."); 
+    overlay.classList.remove('show'); 
+  }
+};
+
+// Asignamos la función a los dos botones
+document.getElementById('btn-generate').addEventListener('click', generarCalendario);
+document.getElementById('btn-reintentar').addEventListener('click', generarCalendario);
+
+function mostrarErrorDemanda() {
+  document.getElementById('upload-section').style.display = 'none';
+  document.getElementById('hero-section').style.display = 'none';
+  document.getElementById('showcase-section').style.display = 'none';
+  document.getElementById('result-section').style.display = 'none';
+  
+  document.getElementById('error-section').style.display = 'block';
+  window.scrollTo(0, 0);
+}
 
 function descargarICS() {
   if (eventosExtraidos.length === 0) return alert("No hay fechas.");

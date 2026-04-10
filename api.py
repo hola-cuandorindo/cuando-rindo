@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Form, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import Response, FileResponse
 from pydantic import BaseModel
@@ -292,7 +292,14 @@ def extraer_datos_con_ia(texto_completo):
         )
         return json.loads(response.text)
     except Exception as e:
-        print(f"Error con la IA: {e}")
+        error_msg = str(e).lower()
+        print(f"Error detallado con la IA: {e}") # Lo dejamos para que lo sigas viendo en los Logs
+        
+        # Si es el error de saturación, lanzamos el 503 para activar la pantalla de la tortuga
+        if "503" in error_msg or "demand" in error_msg or "unavailable" in error_msg:
+            raise HTTPException(status_code=503, detail="Google está saturado (Alta demanda)")
+        
+        # Si es un error distinto (ej. PDF roto), devuelve None como antes
         return None
 async def procesar_con_ia_async(texto):
     # Esto envuelve tu función original para que corra en un hilo separado
